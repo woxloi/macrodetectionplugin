@@ -1,22 +1,26 @@
 package red.man10.mDP
 
 import org.bukkit.Bukkit
+import org.bukkit.Material
 import org.bukkit.Sound
 import org.bukkit.command.Command
 import org.bukkit.command.CommandSender
 import org.bukkit.entity.Player
+import org.bukkit.inventory.Inventory
+import org.bukkit.inventory.ItemStack
+import org.bukkit.inventory.meta.ItemMeta
 import org.bukkit.plugin.java.JavaPlugin
 import org.bukkit.scheduler.BukkitRunnable
 
-var s : CommandSender? = null
-var p : Player? = null
+var s: CommandSender? = null
+var p: Player? = null
 var macrodetection = false
 var move = true
 var prefix = "§a[MDP]§f"
-lateinit var plugin : MDP
+lateinit var plugin: MDP
 var time = 0
-class MDP : JavaPlugin() {
 
+class MDP : JavaPlugin() {
 
     override fun onEnable() {
         plugin = this
@@ -74,6 +78,7 @@ class MDP : JavaPlugin() {
                         time = args[2].toInt()
                         if (player.isOnline) {
                             s!!.sendMessage(prefix + "開始")
+                            openMacroDetectionGUI(player)
                             object : BukkitRunnable() {
                                 override fun run() {
                                     if (time > 0) {
@@ -81,7 +86,7 @@ class MDP : JavaPlugin() {
                                     }
                                     if (time == 0 || !macrodetection) {
                                         macrodetection = false
-                                        sender.sendMessage(prefix + "終了")
+                                        sender.sendMessage(prefix + "キャプチャ失敗！")
                                         cancel()
                                     }
                                     time--
@@ -136,5 +141,38 @@ class MDP : JavaPlugin() {
             }
         }
         return true
+    }
+
+    // プレイヤーにマクロ検知用のGUIを開くメソッド
+    fun openMacroDetectionGUI(player: Player) {
+        val inv: Inventory = Bukkit.createInventory(null, 27, "Macro Detection")
+
+        // 赤いガラスを中央に配置
+        val redGlass = ItemStack(Material.RED_STAINED_GLASS_PANE)
+        val meta = redGlass.itemMeta
+        meta?.setDisplayName("§cマクロ検知")
+        redGlass.itemMeta = meta
+        inv.setItem(13, redGlass)
+
+        player.openInventory(inv)
+    }
+
+    // インベントリがクリックされた時の処理
+    fun onInventoryClick(event: org.bukkit.event.inventory.InventoryClickEvent) {
+        val player = event.whoClicked as Player
+        if (event.view.title == "Macro Detection") {
+            event.isCancelled = true  // アイテム移動を防ぐ
+
+            // 赤いガラスがクリックされた場合
+            if (event.currentItem != null && event.currentItem!!.type == Material.RED_STAINED_GLASS_PANE) {
+                val playerName = player.name // プレイヤーの名前（MCID）を取得
+
+                // キャプチャ成功メッセージを送信
+                player.sendMessage("§a${playerName}のMCIDはキャプチャに成功しました！")
+
+                // タイマーを停止
+                macrodetection = false
+            }
+        }
     }
 }
