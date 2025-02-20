@@ -1,0 +1,6 @@
+name: MDP
+version: 1.1
+main: red.man10.mDP.MDP
+api-version: 1.19
+commands:
+  mdp:
